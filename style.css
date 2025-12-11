@@ -1,0 +1,61 @@
+function calculateInterest() {
+    // 1. 取得所有輸入值
+    const principal = parseFloat(document.getElementById('principal').value);
+    const years = parseFloat(document.getElementById('years').value);
+    const ratePercentage = parseFloat(document.getElementById('interestRate').value);
+    const compoundType = document.getElementById('compound').value;
+    const rateType = document.getElementById('rateType').value;
+
+    // 檢查輸入是否有效
+    if (isNaN(principal) || isNaN(years) || isNaN(ratePercentage) || principal < 0 || years <= 0 || ratePercentage < 0) {
+        alert("請輸入有效的本金、年數和年利率！");
+        return;
+    }
+
+    // 將百分比轉換為小數 (r / 100)
+    const annualRate = ratePercentage / 100;
+
+    let totalInterest = 0;
+    let futureValue = 0;
+
+    // 2. 執行計算邏輯
+    if (compoundType === 'simple') {
+        // 單利計算: I = P * r * t
+        totalInterest = principal * annualRate * years;
+        futureValue = principal + totalInterest;
+
+    } else if (compoundType === 'compound') {
+        // 複利計算: FV = P * (1 + r)^t
+        // 假設一年計息一次 (每年複利)
+        futureValue = principal * Math.pow((1 + annualRate), years);
+        totalInterest = futureValue - principal;
+    }
+
+    // 3. 格式化結果
+    const interestFormatted = totalInterest.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const futureValueFormatted = futureValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // 4. 更新結果顯示區
+    document.getElementById('totalInterest').textContent = `NT$ ${interestFormatted}`;
+    document.getElementById('futureValue').textContent = `NT$ ${futureValueFormatted}`;
+
+    // 顯示利率類型
+    let displayRateText = "";
+    if (rateType === 'general') {
+        displayRateText = `一般銀行公告利息 (${ratePercentage}%)`;
+    } else {
+        displayRateText = `🌟 優惠高利 (${ratePercentage}%)`;
+    }
+    document.getElementById('displayRateType').textContent = displayRateText;
+    
+    // 顯示計算方式
+    const displayCompoundText = compoundType === 'simple' ? '單利' : '複利 (每年複利)';
+    document.getElementById('displayCompound').textContent = displayCompoundText;
+}
+
+// 設置初始顯示，避免剛載入時為空白
+document.addEventListener('DOMContentLoaded', () => {
+    // 根據下拉選單的預設值，設定初始顯示
+    document.getElementById('displayRateType').textContent = "一般銀行公告利息 (1.5%)";
+    document.getElementById('displayCompound').textContent = "單利";
+});
