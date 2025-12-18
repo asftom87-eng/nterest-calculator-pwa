@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#007bff">
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; margin: 0; }
         .calculator-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         h1 { color: #007bff; text-align: center; font-size: 22px; }
         .input-group { margin-bottom: 12px; }
@@ -32,7 +32,7 @@
     <p style="font-size:12px;">總天數: <span id="days">0</span> 天</p>
     <div class="input-group">
         <label>計算方式:</label>
-        <select id="t" onchange="clc()"><option value="s">單利</option><option value="c">複利(21日)</option></select>
+        <select id="t" onchange="clc()"><option value="s">單利</option><option value="c">複利(21日結算)</option></select>
     </div>
     <div class="result-area">
         <p>月均利息: <span id="resM" class="val">NT$ 0.00</span></p>
@@ -44,7 +44,7 @@
 <script src="script.js"></script>
 <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=20').then(() => console.log('v20 registered'));
+        navigator.serviceWorker.register('service-worker.js?v=30');
     }
 </script>
 </body>
