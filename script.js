@@ -1,77 +1,63 @@
-function calculate() {
-    // 1. 取得數值
-    const principal = parseFloat(document.getElementById('principal').value) || 0;
-    const limit = parseFloat(document.getElementById('limit').value) || 0;
-    const prefRate = parseFloat(document.getElementById('prefRate').value) || 0;
-    const genRate = parseFloat(document.getElementById('genRate').value) || 0;
-    const type = document.getElementById('compType').value;
-    
-    const sDateVal = document.getElementById('startDate').value;
-    const eDateVal = document.getElementById('endDate').value;
-    
-    if (!sDateVal || !eDateVal) return;
+function clc() {
+    const p = parseFloat(document.getElementById('p').value) || 0;
+    const l = parseFloat(document.getElementById('l').value) || 0;
+    const r1 = parseFloat(document.getElementById('r1').value) || 0;
+    const r2 = parseFloat(document.getElementById('r2').value) || 0;
+    const type = document.getElementById('t').value;
+    const sd = document.getElementById('sd').value;
+    const ed = document.getElementById('ed').value;
 
-    const start = new Date(sDateVal);
-    const end = new Date(eDateVal);
-    const days = Math.round((end - start) / (1000 * 60000 * 60 * 24));
-    
-    document.getElementById('dayCount').textContent = days > 0 ? days : 0;
+    if (!sd || !ed) return;
+    const start = new Date(sd);
+    const end = new Date(ed);
+    const d = Math.round((end - start) / 86400000);
+    document.getElementById('days').innerText = d > 0 ? d : 0;
+    if (d <= 0) { show(0, 0, p); return; }
 
-    if (days <= 0 || principal <= 0) {
-        show(0, 0, principal);
-        return;
-    }
+    const ph = Math.min(p, l);
+    const pg = Math.max(0, p - l);
+    let ih = 0, ig = 0;
 
-    // 2. 分層
-    const pHigh = Math.min(principal, limit);
-    const pGen = Math.max(0, principal - limit);
-    let iHigh = 0, iGen = 0;
-
-    // 3. 計算
-    if (type === 'simple') {
-        iHigh = pHigh * (prefRate / 100) * (days / 365.25);
-        iGen = pGen * (genRate / 100) * (days / 365.25);
+    if (type === 's') {
+        ih = ph * (r1 / 100) * (d / 365.25);
+        ig = pg * (r2 / 100) * (d / 365.25);
     } else {
-        iHigh = calcComp(pHigh, prefRate / 100, start, end);
-        iGen = calcComp(pGen, genRate / 100, start, end);
+        ih = cmp(ph, r1 / 100, start, end);
+        ig = cmp(pg, r2 / 100, start, end);
     }
 
-    const totalI = iHigh + iGen;
-    // 如果小於32天(約一個月)，月息直接等於總息，避免使用者困惑
-    const monthlyI = (days < 32) ? totalI : (totalI / (days / 30.4375));
-
-    show(monthlyI, totalI, principal + totalI);
+    const total = ih + ig;
+    const mon = (d < 32) ? total : (total / (d / 30.44));
+    show(mon, total, p + total);
 }
 
-function calcComp(p, r, start, end) {
-    let curP = p, totalI = 0, curS = new Date(start.getTime());
-    while (curS < end) {
-        let n21 = new Date(curS.getFullYear(), curS.getMonth(), 21);
-        if (curS.getDate() >= 21) n21.setMonth(n21.getMonth() + 1);
-        let pEnd = (end < n21) ? end : n21;
-        let d = Math.round((pEnd - curS) / (1000 * 3600 * 24));
-        if (d <= 0) break;
-        let i = curP * r * (d / 365.25);
-        totalI += i;
-        if (pEnd.getDate() === 21) curP += i; // 只有在21號當天才把利息加入本金
-        curS = pEnd;
+function cmp(p, r, s, e) {
+    let cp = p, ti = 0, cs = new Date(s.getTime());
+    while (cs < e) {
+        let n = new Date(cs.getFullYear(), cs.getMonth(), 21);
+        if (cs.getDate() >= 21) n.setMonth(n.getMonth() + 1);
+        let pe = (e < n) ? e : n;
+        let days = Math.round((pe - cs) / 86400000);
+        if (days <= 0) break;
+        let i = cp * r * (days / 365.25);
+        ti += i;
+        if (pe.getDate() === 21) cp += i;
+        cs = pe;
     }
-    return totalI;
+    return ti;
 }
 
 function show(m, t, f) {
-    const fms = (v) => "NT$ " + v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('resMonthly').textContent = fms(m);
-    document.getElementById('resTotal').textContent = fms(t);
-    document.getElementById('resFuture').textContent = fms(f);
+    const fms = (v) => "NT$ " + v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('resM').innerText = fms(m);
+    document.getElementById('resT').innerText = fms(t);
+    document.getElementById('resF').innerText = fms(f);
 }
 
-// 預設日期設定
 document.addEventListener('DOMContentLoaded', () => {
-    const today = new Date();
-    document.getElementById('startDate').value = today.toISOString().slice(0, 10);
-    const next = new Date();
-    next.setMonth(next.getMonth() + 1);
-    document.getElementById('endDate').value = next.toISOString().slice(0, 10);
-    calculate();
+    const n = new Date();
+    document.getElementById('sd').value = n.toISOString().slice(0, 10);
+    n.setMonth(n.getMonth() + 1);
+    document.getElementById('ed').value = n.toISOString().slice(0, 10);
+    clc();
 });
