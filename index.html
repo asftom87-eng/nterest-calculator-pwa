@@ -18,7 +18,7 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .result-area { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 10px; border-left: 5px solid #007bff; }
         .val { font-weight: bold; color: #28a745; float: right; }
-        .ad-box { margin-top: 20px; padding: 10px; border: 1px dashed #ccc; text-align: center; color: #999; font-size: 12px; }
+        .ad-box { margin-top: 20px; padding: 10px; border: 1px dashed #ccc; text-align: center; color: #999; font-size: 12px; min-height: 100px; }
     </style>
 </head>
 <body>
@@ -52,12 +52,15 @@
              data-full-width-responsive="true"></ins>
         <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
     </div>
+    <div style="font-size: 10px; color: #ccc; margin-top: 10px; text-align: center;">
+        本工具提供精確的分層利率計算，支援台灣各大銀行每月21日結息慣例。
+    </div>
 </div>
 
 <script src="script.js"></script>
 <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=40');
+        navigator.serviceWorker.register('service-worker.js?v=50');
     }
 </script>
 </body>
