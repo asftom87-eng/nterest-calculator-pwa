@@ -1,10 +1,15 @@
-/**
- * 精確計算邏輯：日單利、月結算 (21日)
- */
+// ====== 活存利率計算核心 (修正版) ======
+
 function calculateDays() {
-    const start = new Date(document.getElementById('startDate').value);
-    const end = new Date(document.getElementById('endDate').value);
-    if (isNaN(start) || isNaN(end) || start >= end) return { days: 0, years: 0 };
+    const startVal = document.getElementById('startDate').value;
+    const endVal = document.getElementById('endDate').value;
+    if (!startVal || !endVal) return { days: 0, years: 0 };
+    
+    const start = new Date(startVal);
+    const end = new Date(endVal);
+    
+    if (start >= end) return { days: 0, years: 0 };
+    
     const days = Math.round((end - start) / (1000 * 3600 * 24));
     return { days, years: days / 365.25 };
 }
@@ -36,18 +41,26 @@ function calculateMonthlyCompoundInterest(principal, annualRate, startDate, endD
 }
 
 function calculateTieredInterest() {
+    // 取得輸入值並強制轉為數字，防止異常字串導致 0.00
     const principal = parseFloat(document.getElementById('principal').value) || 0;
     const limit = parseFloat(document.getElementById('limit').value) || 0;
     const prefRate = parseFloat(document.getElementById('preferentialRate').value) || 0;
     const genRate = parseFloat(document.getElementById('generalRate').value) || 0;
     const compoundType = document.getElementById('compound').value;
-    const { days, years } = calculateDays();
     
-    document.getElementById('displayDays').textContent = days;
-    if (days <= 0) return;
+    const { days, years } = calculateDays();
+    const dayDisplay = document.getElementById('displayDays');
+    if (dayDisplay) dayDisplay.textContent = days;
 
-    const startDate = new Date(document.getElementById('startDate').value);
-    const endDate = new Date(document.getElementById('endDate').value);
+    if (days <= 0 || principal <= 0) {
+        updateDisplay(0, 0, principal);
+        return;
+    }
+
+    const startVal = document.getElementById('startDate').value;
+    const endVal = document.getElementById('endDate').value;
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
 
     const pHigh = Math.min(principal, limit);
     const pGen = Math.max(0, principal - limit);
@@ -62,20 +75,31 @@ function calculateTieredInterest() {
     }
 
     const totalI = iHigh + iGen;
-    const mInterest = (days < 32) ? totalI : (totalI / (days / (365.25 / 12)));
+    const mInterest = (days < 32) ? totalI : (totalI / (days / (30.4375))); // 使用平均月天數
 
-    const fmt = (num) => "NT$ " + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    document.getElementById('monthlyInterest').textContent = fmt(mInterest);
-    document.getElementById('totalInterest').textContent = fmt(totalI);
-    document.getElementById('futureValue').textContent = fmt(principal + totalI);
+    updateDisplay(mInterest, totalI, principal + totalI);
+}
+
+function updateDisplay(monthly, total, future) {
+    const fmt = (num) => "NT$ " + (num || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    document.getElementById('monthlyInterest').textContent = fmt(monthly);
+    document.getElementById('totalInterest').textContent = fmt(total);
+    document.getElementById('futureValue').textContent = fmt(future);
 }
 
 // 初始化日期
 document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
-    document.getElementById('startDate').value = now.toISOString().slice(0, 10);
-    const nextMonth = new Date(now);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    document.getElementById('endDate').value = nextMonth.toISOString().slice(0, 10);
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (startDateInput && !startDateInput.value) {
+        startDateInput.value = now.toISOString().slice(0, 10);
+    }
+    if (endDateInput && !endDateInput.value) {
+        const nextMonth = new Date(now);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        endDateInput.value = nextMonth.toISOString().slice(0, 10);
+    }
     calculateTieredInterest();
 });
