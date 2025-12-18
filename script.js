@@ -12,7 +12,11 @@ function clc() {
     const end = new Date(ed);
     const d = Math.round((end - start) / 86400000);
     document.getElementById('days').innerText = d > 0 ? d : 0;
-    if (d <= 0) { show(0, 0, p); return; }
+    
+    if (d <= 0) {
+        show(0, 0, p);
+        return;
+    }
 
     const ph = Math.min(p, l);
     const pg = Math.max(0, p - l);
