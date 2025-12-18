@@ -3,116 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌟 活存利率分層計算機 (最終純手動版)</title>
-    <style>
-        /* CSS 樣式 */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .calculator-container { background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); width: 100%; max-width: 450px; }
-        h1 { text-align: center; color: #007bff; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input[type="number"], input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        
-        .rate-inputs { border: 1px solid #91d5ff; padding: 15px; border-radius: 8px; margin-top: 15px; background-color: #e6f7ff; }
-        .rate-inputs h3 { margin-top: 0; color: #007bff; }
-        
-        .date-input-group { display: flex; justify-content: space-between; gap: 10px; }
-        .date-input-group > div { flex-grow: 1; }
-        
-        .result-area { margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; }
-        .result-area h2 { color: #333; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
-        .result-area strong { color: #007bff; }
-        #totalInterest, #futureValue { font-size: 20px; font-weight: bold; color: #28a745; }
-        hr { border: none; border-top: 1px dashed #ccc; margin: 15px 0; }
-        .note { font-size: 14px; color: #888; margin-top: 10px; text-align: center; }
-    </style>
-</head>
-<title>🌟 活存利率分層計算機 (PWA)</title>
-    <link rel="manifest" href="/manifest.json"> 
+    <title>💰 活存利率計算機 (Pro 版)</title>
+    
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#007bff">
-    <script>
-        // PWA 核心設定 3: 註冊 Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-                    // Registration was successful
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function(err) {
-                    // registration failed :(
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .calculator-container { background-color: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); width: 100%; max-width: 450px; }
+        h1 { text-align: center; color: #007bff; font-size: 24px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .rate-inputs { border: 1px solid #91d5ff; padding: 15px; border-radius: 8px; margin: 15px 0; background-color: #e6f7ff; }
+        .date-input-group { display: flex; gap: 10px; }
+        .date-input-group > div { flex: 1; }
+        .result-area { margin-top: 20px; padding-top: 15px; border-top: 2px solid #eee; }
+        .result-area h2 { font-size: 18px; margin-bottom: 10px; color: #333; border-bottom: 2px solid #007bff; }
+        #totalInterest, #futureValue { font-size: 20px; font-weight: bold; color: #28a745; }
+        .note { font-size: 12px; color: #888; text-align: center; margin-top: 10px; }
+
+        /* 2. 廣告容器樣式 */
+        .ad-container {
+            margin-top: 20px;
+            text-align: center;
+            background: #fafafa;
+            border: 1px dashed #bbb;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
         }
-    </script>
+    </style>
 </head>
 <body>
 
     <div class="calculator-container">
-        <h1>💰 活存利率分層計算機</h1>
-        <p class="note">所有參數請依據銀行公告手動輸入。</p>
+        <h1>💰 活存分層利率計算</h1>
 
         <div class="input-group">
-            <label for="principal">總存款本金 (Total Principal):</label>
-            <input type="number" id="principal" value="200000" min="0" oninput="calculateTieredInterest()">
+            <label>總存款本金:</label>
+            <input type="number" id="principal" value="200000" oninput="calculateTieredInterest()">
         </div>
         
         <div class="rate-inputs">
-            <h3>分層利率設定 (年利率 %)</h3>
-            
-            <div class="input-group">
-                <label for="limit">優惠高利限額 (Limit for Preferential Rate):</label>
-                <input type="number" id="limit" value="100000" min="0" step="1000" oninput="calculateTieredInterest()">
-            </div>
-            
-            <div class="input-group">
-                <label for="preferentialRate">優惠限額內年利率 (%):</label>
-                <input type="number" id="preferentialRate" value="3.0" min="0" step="0.01" oninput="calculateTieredInterest()">
-            </div>
-            
-            <div class="input-group">
-                <label for="generalRate">超過限額一般年利率 (%):</label>
-                <input type="number" id="generalRate" value="0.825" min="0" step="0.01" oninput="calculateTieredInterest()">
-            </div>
+            <label>優惠高利限額:</label>
+            <input type="number" id="limit" value="100000" oninput="calculateTieredInterest()">
+            <label style="margin-top:10px;">優惠限額內年利率 (%):</label>
+            <input type="number" id="preferentialRate" value="4.0" step="0.01" oninput="calculateTieredInterest()">
+            <label style="margin-top:10px;">超過限額一般年利率 (%):</label>
+            <input type="number" id="generalRate" value="0.825" step="0.01" oninput="calculateTieredInterest()">
         </div>
         
         <div class="input-group">
             <label>存款期限:</label>
             <div class="date-input-group">
-                <div>
-                    <label for="startDate">起始日期:</label>
-                    <input type="date" id="startDate" value="" onchange="calculateTieredInterest()">
-                </div>
-                <div>
-                    <label for="endDate">結束日期:</label>
-                    <input type="date" id="endDate" value="" onchange="calculateTieredInterest()">
-                </div>
+                <div><input type="date" id="startDate" onchange="calculateTieredInterest()"></div>
+                <div><input type="date" id="endDate" onchange="calculateTieredInterest()"></div>
             </div>
-            <p style="font-size: 14px; margin-top: 8px;">
-                總天數: <span id="displayDays">0</span> 天 (約 <span id="displayYears">0</span> 年)
-            </p>
+            <p style="font-size: 12px; margin-top: 5px;">總天數: <span id="displayDays">0</span> 天</p>
         </div>
         
         <div class="input-group">
-            <label for="compound">計算方式:</label>
+            <label>計算方式:</label>
             <select id="compound" onchange="calculateTieredInterest()">
                 <option value="simple">單利 (Simple Interest)</option>
-                <option value="monthly_compound">複利 (每月21日結算滾入)</option> </select>
+                <option value="monthly_compound">複利 (每月21日結算滾入)</option>
+            </select>
         </div>
         
-        <div id="result-area" class="result-area">
-            <h2>📝 計算結果 (以實際天數計算)</h2>
-            <p><strong>優惠限額內本金:</strong> <span id="principalHigh">NT$ 0.00</span> (@ <span id="rateHigh">0.0%</span>)</p>
-            <p><strong>一般利率本金:</strong> <span id="principalGeneral">NT$ 0.00</span> (@ <span id="rateGeneral">0.0%</span>)</p>
-            <hr>
-            
-            <p><strong>每月平均利息 (Monthly Interest):</strong> <span id="monthlyInterest">NT$ 0.00</span></p>
-            
-            <p><strong>總利息 (Total Interest):</strong> <span id="totalInterest">NT$ 0.00</span></p>
-            
-            <p><strong>本利和 (Future Value):</strong> <span id="futureValue">NT$ 0.00</span></p>
+        <div class="result-area">
+            <h2>📝 計算結果</h2>
+            <p><strong>每月平均利息:</strong> <span id="monthlyInterest">NT$ 0.00</span></p>
+            <p><strong>總利息:</strong> <span id="totalInterest">NT$ 0.00</span></p>
+            <p><strong>本利和:</strong> <span id="futureValue">NT$ 0.00</span></p>
         </div>
+
+        <div class="ad-container">
+            廣告預留位置
+        </div>
+
+        <p class="note">所有計算結果僅供參考，以銀行實際結算為準。</p>
     </div>
 
     <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js');
+            });
+        }
+    </script>
 </body>
 </html>
