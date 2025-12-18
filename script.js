@@ -1,105 +1,77 @@
-// ====== 活存利率計算核心 (修正版) ======
-
-function calculateDays() {
-    const startVal = document.getElementById('startDate').value;
-    const endVal = document.getElementById('endDate').value;
-    if (!startVal || !endVal) return { days: 0, years: 0 };
-    
-    const start = new Date(startVal);
-    const end = new Date(endVal);
-    
-    if (start >= end) return { days: 0, years: 0 };
-    
-    const days = Math.round((end - start) / (1000 * 3600 * 24));
-    return { days, years: days / 365.25 };
-}
-
-function calculateMonthlyCompoundInterest(principal, annualRate, startDate, endDate) {
-    let currentPrincipal = principal;
-    let totalInterest = 0;
-    let currentStart = new Date(startDate.getTime());
-
-    const getNext21 = (date) => {
-        let next = new Date(date.getFullYear(), date.getMonth(), 21);
-        if (date.getDate() >= 21) next.setMonth(next.getMonth() + 1);
-        return next;
-    };
-
-    while (currentStart < endDate) {
-        let nextSettlement = getNext21(currentStart);
-        let periodEnd = (endDate < nextSettlement) ? endDate : nextSettlement;
-        let days = Math.round((periodEnd - currentStart) / (1000 * 3600 * 24));
-        
-        if (days <= 0) break;
-        let interest = currentPrincipal * annualRate * (days / 365.25);
-        totalInterest += interest;
-        
-        if (periodEnd.getDate() === 21) currentPrincipal += interest;
-        currentStart = periodEnd;
-    }
-    return totalInterest;
-}
-
-function calculateTieredInterest() {
-    // 取得輸入值並強制轉為數字，防止異常字串導致 0.00
+function calculate() {
+    // 1. 取得數值
     const principal = parseFloat(document.getElementById('principal').value) || 0;
     const limit = parseFloat(document.getElementById('limit').value) || 0;
-    const prefRate = parseFloat(document.getElementById('preferentialRate').value) || 0;
-    const genRate = parseFloat(document.getElementById('generalRate').value) || 0;
-    const compoundType = document.getElementById('compound').value;
+    const prefRate = parseFloat(document.getElementById('prefRate').value) || 0;
+    const genRate = parseFloat(document.getElementById('genRate').value) || 0;
+    const type = document.getElementById('compType').value;
     
-    const { days, years } = calculateDays();
-    const dayDisplay = document.getElementById('displayDays');
-    if (dayDisplay) dayDisplay.textContent = days;
+    const sDateVal = document.getElementById('startDate').value;
+    const eDateVal = document.getElementById('endDate').value;
+    
+    if (!sDateVal || !eDateVal) return;
+
+    const start = new Date(sDateVal);
+    const end = new Date(eDateVal);
+    const days = Math.round((end - start) / (1000 * 60000 * 60 * 24));
+    
+    document.getElementById('dayCount').textContent = days > 0 ? days : 0;
 
     if (days <= 0 || principal <= 0) {
-        updateDisplay(0, 0, principal);
+        show(0, 0, principal);
         return;
     }
 
-    const startVal = document.getElementById('startDate').value;
-    const endVal = document.getElementById('endDate').value;
-    const startDate = new Date(startVal);
-    const endDate = new Date(endVal);
-
+    // 2. 分層
     const pHigh = Math.min(principal, limit);
     const pGen = Math.max(0, principal - limit);
-    let iHigh, iGen;
+    let iHigh = 0, iGen = 0;
 
-    if (compoundType === 'simple') {
-        iHigh = pHigh * (prefRate / 100) * years;
-        iGen = pGen * (genRate / 100) * years;
+    // 3. 計算
+    if (type === 'simple') {
+        iHigh = pHigh * (prefRate / 100) * (days / 365.25);
+        iGen = pGen * (genRate / 100) * (days / 365.25);
     } else {
-        iHigh = calculateMonthlyCompoundInterest(pHigh, prefRate / 100, startDate, endDate);
-        iGen = calculateMonthlyCompoundInterest(pGen, genRate / 100, startDate, endDate);
+        iHigh = calcComp(pHigh, prefRate / 100, start, end);
+        iGen = calcComp(pGen, genRate / 100, start, end);
     }
 
     const totalI = iHigh + iGen;
-    const mInterest = (days < 32) ? totalI : (totalI / (days / (30.4375))); // 使用平均月天數
+    // 如果小於32天(約一個月)，月息直接等於總息，避免使用者困惑
+    const monthlyI = (days < 32) ? totalI : (totalI / (days / 30.4375));
 
-    updateDisplay(mInterest, totalI, principal + totalI);
+    show(monthlyI, totalI, principal + totalI);
 }
 
-function updateDisplay(monthly, total, future) {
-    const fmt = (num) => "NT$ " + (num || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    document.getElementById('monthlyInterest').textContent = fmt(monthly);
-    document.getElementById('totalInterest').textContent = fmt(total);
-    document.getElementById('futureValue').textContent = fmt(future);
+function calcComp(p, r, start, end) {
+    let curP = p, totalI = 0, curS = new Date(start.getTime());
+    while (curS < end) {
+        let n21 = new Date(curS.getFullYear(), curS.getMonth(), 21);
+        if (curS.getDate() >= 21) n21.setMonth(n21.getMonth() + 1);
+        let pEnd = (end < n21) ? end : n21;
+        let d = Math.round((pEnd - curS) / (1000 * 3600 * 24));
+        if (d <= 0) break;
+        let i = curP * r * (d / 365.25);
+        totalI += i;
+        if (pEnd.getDate() === 21) curP += i; // 只有在21號當天才把利息加入本金
+        curS = pEnd;
+    }
+    return totalI;
 }
 
-// 初始化日期
+function show(m, t, f) {
+    const fms = (v) => "NT$ " + v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('resMonthly').textContent = fms(m);
+    document.getElementById('resTotal').textContent = fms(t);
+    document.getElementById('resFuture').textContent = fms(f);
+}
+
+// 預設日期設定
 document.addEventListener('DOMContentLoaded', () => {
-    const now = new Date();
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
-    
-    if (startDateInput && !startDateInput.value) {
-        startDateInput.value = now.toISOString().slice(0, 10);
-    }
-    if (endDateInput && !endDateInput.value) {
-        const nextMonth = new Date(now);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        endDateInput.value = nextMonth.toISOString().slice(0, 10);
-    }
-    calculateTieredInterest();
+    const today = new Date();
+    document.getElementById('startDate').value = today.toISOString().slice(0, 10);
+    const next = new Date();
+    next.setMonth(next.getMonth() + 1);
+    document.getElementById('endDate').value = next.toISOString().slice(0, 10);
+    calculate();
 });
